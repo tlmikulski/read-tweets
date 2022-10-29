@@ -6,6 +6,7 @@
 parameters:
     app.twitter_users: [ 'NASA', 'SpaceX', 'BoeingSpace' ]
     app.tweets_dir: 'files/'
+    app.twitter.bearer_token: '%env(TWITTER_BEARER_TOKEN)%'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -24,5 +25,10 @@ services:
     # please note that last definitions always *replace* previous ones
     App\Controller\TweetsController:
         arguments:
+        - '%app.twitter_users%'
+        - '%app.tweets_dir%'
+    App\Command\GetTwitterPostsCommand:
+        arguments:
             - '%app.twitter_users%'
             - '%app.tweets_dir%'
+            - '%app.twitter.bearer_token%'

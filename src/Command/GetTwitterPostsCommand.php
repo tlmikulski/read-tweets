@@ -8,6 +8,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpClient\HttpClient;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Symfony\Component\Filesystem\Filesystem;
 
@@ -21,28 +22,32 @@ class GetTwitterPostsCommand extends Command
     private HttpClientInterface $http;
     private Filesystem $filesystem;
 
-    const USERS = [
-        'NASA',
-        'SpaceX',
-        'BoeingSpace'
-    ];
-
-    const TWEETS_DIR = 'files/';
+    private $users;
+    private $tweetsDir;
+    private $bearerToken;
 
     const URL = 'https://api.twitter.com/2';
     const URL_RECENT_TWEETS = '/tweets/search/recent?query=from:';
-    const BEARER_TOKEN = 'AAAAAAAAAAAAAAAAAAAAAG%2B9igEAAAAASkVqhfz%2F4sOKqMD9Wadhh%2F93ReE%3DRu3xdQVtZN7M0ucbY60g8loLbOxxDggXplInZnSovvJ8t8E2ln';
+
+    public function __construct($users, $tweetsDir, $bearerToken)
+    {
+        $this->users = $users;
+        $this->tweetsDir = $tweetsDir;
+        $this->bearerToken = $bearerToken;
+
+        parent::__construct();
+    }
 
     protected function configure(): void
     {
         $this->http = HttpClient::create([
-            'auth_bearer' => self::BEARER_TOKEN
+            'auth_bearer' => $this->bearerToken
         ]);
 
         $this->filesystem = new Filesystem();
 
-        if(!$this->filesystem->exists(self::TWEETS_DIR)) {
-            $this->filesystem->mkdir(self::TWEETS_DIR);
+        if(!$this->filesystem->exists($this->tweetsDir)) {
+            $this->filesystem->mkdir($this->tweetsDir);
         }
     }
 
@@ -52,16 +57,24 @@ class GetTwitterPostsCommand extends Command
 
         $io->write('Requesting JSON files..');
 
-        foreach (self::USERS as $user) {
+        foreach ($this->users as $user) {
             $recentTweets = $this
                 ->http
-                ->request('GET', self::URL . self::URL_RECENT_TWEETS . $user);
+                ->request('GET',
+                    self::URL . self::URL_RECENT_TWEETS . $user);
 
-            if ($recentTweets->getStatusCode() == 200) {
+            if ($recentTweets->getStatusCode() == Response::HTTP_OK) {
                 $this
                     ->filesystem
-                    ->dumpFile(self::TWEETS_DIR . $user . '.json',
+                    ->dumpFile($this->tweetsDir . $user . '.json',
                         $recentTweets->getContent());
+            } else {
+                $io->error(
+                    vsprintf(
+                        'Cannot download JSON, HTTP status code: %s',
+                        [ $recentTweets->getStatusCode() ]));
+
+                return Command::FAILURE;
             }
         }
 
