@@ -60,7 +60,7 @@ class GetTwitterPostsCommand extends Command
             if ($recentTweets->getStatusCode() == 200) {
                 $this
                     ->filesystem
-                    ->dumpFile(self::TWEETS_DIR . strtolower($user) . '.json',
+                    ->dumpFile(self::TWEETS_DIR . $user . '.json',
                         $recentTweets->getContent());
             }
         }
