@@ -1,3 +1,7 @@
 index:
     path: /
     controller: App\Controller\TweetsController::index
+
+recent_tweets:
+    path: /{user}
+    controller: App\Controller\TweetsController::recent
