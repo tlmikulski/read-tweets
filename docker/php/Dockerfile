@@ -8,3 +8,9 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" &&
     apt-get update && \
     apt-get -y install git zip
 
+WORKDIR /opt/code
+COPY . /opt/code
+
+RUN chown -R www-data:www-data /opt/code
+
+VOLUME /opt/code

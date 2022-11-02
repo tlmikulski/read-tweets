@@ -7,11 +7,20 @@ services:
     ports:
       - "8080:80"
     volumes:
-      - .:/opt/code
-      - ./docker/web/default.conf:/etc/nginx/conf.d/default.conf
+      - type: volume
+        source: app
+        target: /opt/code
+      - type: bind
+        source: ./docker/web/default.conf
+        target: /etc/nginx/conf.d/default.conf
   php:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
     volumes:
-      - .:/opt/code
+      - type: volume
+        source: app
+        target: /opt/code
+
+volumes:
+  app:
